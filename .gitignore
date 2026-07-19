@@ -1,0 +1,15 @@
+# Automatically generated documents
+/dist/
+
+# Operating-system files
+.DS_Store
+
+# Editor files
+.vscode/
+.idea/
+
+# Temporary LaTeX files
+*.aux
+*.log
+*.out
+*.toc
