@@ -1,98 +1,83 @@
-name: Build technical documents
+name: Deploy documentation website
 
 on:
   push:
     branches:
       - main
-    paths:
-      - "documents/**"
-      - "templates/**"
-      - "scripts/**"
-      - "documents.yml"
-      - "Makefile"
-      - ".github/workflows/build-documents.yml"
-
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "documents/**"
-      - "templates/**"
-      - "scripts/**"
-      - "documents.yml"
-      - "Makefile"
 
   workflow_dispatch:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
 
 jobs:
   build:
-    name: Build PDF documents
+    name: Build MkDocs website
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Install Pandoc and LaTeX
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
         run: |
-          sudo apt-get update
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-          sudo apt-get install --yes \
-            pandoc \
-            texlive-xetex \
-            texlive-latex-extra \
-            texlive-fonts-recommended \
-            texlive-fonts-extra \
-            curl
-
-      - name: Install yq
+      - name: Generate version page
         run: |
-          sudo curl --location \
-            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
-            --output /usr/local/bin/yq
+          if [ -f scripts/generate_version_page.py ]; then
+            python scripts/generate_version_page.py
+          fi
 
-          sudo chmod +x /usr/local/bin/yq
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
 
-      - name: Display installed versions
+      - name: Build MkDocs website
         run: |
-          pandoc --version
-          xelatex --version
-          yq --version
+          mkdocs build --clean --site-dir site
 
-      - name: Make build script executable
+      - name: Verify website
         run: |
-          chmod +x scripts/build.sh
-
-      - name: Build all documents
-        run: |
-          make build
-
-      - name: Verify generated PDFs
-        shell: bash
-        run: |
-          echo "Generated PDF documents:"
-
-          find dist \
-            -type f \
-            -name "*.pdf" \
-            -print
-
-          PDF_COUNT=$(find dist -type f -name "*.pdf" | wc -l)
-
-          if [ "$PDF_COUNT" -eq 0 ]; then
-            echo "Error: No PDF documents were generated."
+          if [ ! -f site/index.html ]; then
+            echo "Error: site/index.html was not generated"
             exit 1
           fi
 
-          echo "Successfully generated $PDF_COUNT PDF document(s)."
+          echo "Generated website files:"
+          find site -maxdepth 2 -type f | head -30
 
-      - name: Upload generated documents
-        uses: actions/upload-artifact@v4
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
         with:
-          name: dx-technical-documents-${{ github.run_number }}
-          path: dist/
-          if-no-files-found: error
-          retention-days: 30
+          path: site
+
+  deploy:
+    name: Deploy website
+    runs-on: ubuntu-latest
+    needs: build
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
