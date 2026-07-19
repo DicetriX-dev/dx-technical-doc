@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-CONFIG_FILE="documents.yaml"
-COMMON_METADATA="templates/metadata.yaml"
+CONFIG_FILE="documents.yml"
+COMMON_METADATA="templates/metadata.yml"
 
 if ! command -v yq >/dev/null 2>&1; then
     echo "Error: yq is required."
