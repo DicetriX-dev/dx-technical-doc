@@ -8,7 +8,7 @@ on:
       - "documents/**"
       - "templates/**"
       - "scripts/**"
-      - "documents.yaml"
+      - "documents.yml"
       - "Makefile"
       - ".github/workflows/build-documents.yml"
 
@@ -19,7 +19,7 @@ on:
       - "documents/**"
       - "templates/**"
       - "scripts/**"
-      - "documents.yaml"
+      - "documents.yml"
       - "Makefile"
 
   workflow_dispatch:

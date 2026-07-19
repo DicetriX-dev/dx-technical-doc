@@ -38,8 +38,8 @@ DX-TECHNICAL-DOC/
 ├── scripts/
 │   └── build.sh
 ├── templates/
-│   └── metadata.yaml
-├── documents.yaml
+│   └── metadata.yml
+├── documents.yml
 ├── Makefile
 └── README.md
 ```
